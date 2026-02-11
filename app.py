@@ -2,6 +2,7 @@ import streamlit as st
 import tensorflow as tf
 from PIL import Image
 import numpy as np
+from huggingface_hub import hf_hub_download
 
 # --- 1. Streamlit Page Configuration ---
 st.set_page_config(
@@ -17,29 +18,28 @@ if 'selected_page' not in st.session_state:
 if 'show_dfu_advice' not in st.session_state:
     st.session_state.show_dfu_advice = False
 
-
 # --- 3. Navigation Functions (Callbacks) ---
 def nav_to_detector():
     st.session_state.selected_page = "DFU Detector"
 
-
 def nav_to_about():
     st.session_state.selected_page = "About DFU"
-
 
 def nav_to_advice():
     st.session_state.selected_page = "Medical Advice"
 
-
-# --- 4. Load the Model ---
+# --- 4. Load the Model from Hugging Face ---
 @st.cache_resource
 def load_my_model():
     try:
-        return tf.keras.models.load_model(r"C:\Users\Original 01228818225\Downloads\dfu_model.keras")
+        model_path = hf_hub_download(
+            repo_id="abdelrahmanemam10/dfu_model",  # الريبو عندك
+            filename="dfu_model.keras"              # اسم الملف في الريبو
+        )
+        return tf.keras.models.load_model(model_path)
     except Exception as e:
         st.error(f"Error loading model: {e}")
         st.stop()
-
 
 model = load_my_model()
 class_names = ['Abnormal (Ulcer)', 'Normal (Healthy skin)']
@@ -62,7 +62,8 @@ if st.session_state.selected_page == "About DFU":
 
     st.markdown("""
     ### What is DFU?
-    **Diabetic Foot Ulcer** is a serious complication of diabetes mellitus, typically characterized by a breakdown of skin tissue on the foot. 
+    **Diabetic Foot Ulcer** is a serious complication of diabetes mellitus, typically characterized by a breakdown of skin tissue on the foot.
+    
     It is a critical condition that requires immediate attention to prevent chronic infections or even lower-limb amputation.
     """)
 
@@ -94,7 +95,8 @@ if st.session_state.selected_page == "About DFU":
     """)
 
     st.warning(
-        "⚠️ **Disclaimer:** This AI tool is for **preliminary screening and educational purposes only**. It is not a clinical diagnosis. Always consult a medical professional if you suspect an injury.")
+        "⚠️ **Disclaimer:** This AI tool is for **preliminary screening and educational purposes only**. It is not a clinical diagnosis. Always consult a medical professional if you suspect an injury."
+    )
 
     st.button("Start DFU Detector", on_click=nav_to_detector)
 
@@ -106,7 +108,7 @@ elif st.session_state.selected_page == "DFU Detector":
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        # Crucial Fix: Convert to RGB to handle PNG alpha channels
+        # Convert to RGB to handle PNG alpha channels
         image = Image.open(uploaded_file).convert('RGB')
         st.image(image, caption="Uploaded Image", width=400)
 
